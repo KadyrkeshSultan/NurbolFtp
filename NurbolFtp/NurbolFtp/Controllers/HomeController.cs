@@ -1,64 +1,77 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
+﻿using System.Net;
+using System.Text;
+using FluentFTP;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using NurbolFtp.Models;
 
 namespace NurbolFtp.Controllers
 {
     public class HomeController : Controller
     {
+        public static object locker = new object();
+        private readonly IHostingEnvironment _appEnvironment;
+        private readonly IConfiguration _configuration;
+
+        public HomeController(IHostingEnvironment appEnvironment, IConfiguration configuration)
+        {
+            _appEnvironment = appEnvironment;
+            _configuration = configuration;
+        }
+
+        [HttpGet]
         public IActionResult Index()
         {
-            return View();
+            return View(new WpLink());
         }
 
         [HttpPost]
-        public IActionResult Save(WpLink model)
+        public IActionResult Index(WpLink model)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            lock (locker)
+            {
+                if (!ModelState.IsValid)
+                    return View(model);
 
-            WebClient client = new WebClient();
-            string url = Request.IsHttps ? "https://" : "http://" +  Request.Host.Value + "/home/whatsapp?name=" + model.Name + "&phone=" + model.Phone + "&picture=" + model.Picture + "&text=" + model.Text + "&theme=" + model.Theme;
-            string html = client.DownloadString(url);
-            return Ok(new { html });
+                WebClient client = new WebClient();
+                string link = "http://whatspp.kz/" + model.Name;
+                string url = "";
+                if (model.Theme == 0)
+                    url = Request.IsHttps ? "https://" : "http://" + Request.Host.Value + "/home/whatsapp?name=" + model.Name + "&phone=" + model.Phone + "&picture=" + model.File.FileName + "&text=" + model.Text + "&theme=" + model.Theme;
+                else
+                    url = Request.IsHttps ? "https://" : "http://" + Request.Host.Value + "/home/whatsapp?name=" + model.Name + "&phone=" + model.Phone + "&text=" + model.Text + "&theme=" + model.Theme;
+
+                string html = client.DownloadString(url);
+
+                using (var ftpClient = new FtpClient(_configuration["Ftp:Host"]))
+                {
+                    ftpClient.Credentials = new NetworkCredential(_configuration["Ftp:Username"], _configuration["Ftp:Password"]);
+                    ftpClient.Upload(Encoding.UTF8.GetBytes(html), $"/httpdocs/{model.Name}/index.html", FtpExists.Overwrite, true);
+
+                    if (model.File != null)
+                    {
+                        var pictureBuffer = new byte[model.File.Length];
+                        using (var stream = model.File.OpenReadStream())
+                        {
+                            stream.Read(pictureBuffer, 0, (int)model.File.Length - 1);
+                        }
+
+                        ftpClient.Upload(pictureBuffer, $"/httpdocs/{model.Name}/{model.File.FileName}", FtpExists.Overwrite, true);
+                    }
+                }
+
+                TempData["wpLink"] = link;
+                return Index();
+            }
         }
-
+        
         public IActionResult Whatsapp(WpLink model)
         {
             if (model.Theme == 0)
                 return View("Picture", model);
             else
                 return View("Text", model);
-        }
-
-        public IActionResult About()
-        {
-            ViewData["Message"] = "Your application description page.";
-
-            return View();
-        }
-
-        public IActionResult Contact()
-        {
-            ViewData["Message"] = "Your contact page.";
-
-            return View();
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }
