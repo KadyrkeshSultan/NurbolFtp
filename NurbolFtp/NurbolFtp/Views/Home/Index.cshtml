@@ -32,7 +32,7 @@
 
                     </div>
                     <div class="row">
-                        <div class="col-md-5 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="theme">Выберите стиль</label>
                             <select asp-for="Theme" class="custom-select d-block w-100" id="theme">
                                 <option value="0">С картинкой</option>
@@ -40,6 +40,13 @@
                             </select>
                             <div class="invalid-feedback">
                                 Выберите стиль
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="password">Пароль</label>
+                            <input asp-for="Password" type="password" class="form-control" id="password" placeholder="" />
+                            <div class="invalid-feedback">
+                                Введите пароль
                             </div>
                         </div>
                     </div>

@@ -34,6 +34,13 @@ namespace NurbolFtp.Controllers
                 if (!ModelState.IsValid)
                     return View(model);
 
+                string password = _configuration["Ftp:Pass"];
+                if (model.Password != password)
+                {
+                    ModelState.AddModelError(string.Empty, "Неправильный пароль");
+                    return View(model);
+                }
+
                 WebClient client = new WebClient();
                 string link = "http://whatspp.kz/" + model.Name;
                 string url = "";
@@ -62,7 +69,7 @@ namespace NurbolFtp.Controllers
                 }
 
                 TempData["wpLink"] = link;
-                return Index();
+                return RedirectToActionPermanent(nameof(Index));
             }
         }
         
