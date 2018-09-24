@@ -1,0 +1,155 @@
+﻿@{ 
+    Layout = null;
+}
+<html>
+<head>
+    <title>Создание ссылок - WhatsApp</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <link rel="shortcut icon" href="~/images/whatsapp.png" type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.17.0/dist/additional-methods.min.js"></script>
+
+    <script type="text/javascript">
+
+        jQuery.validator.addMethod("phoneKZ", function (phone_number, element) {
+            phone_number = phone_number.replace(/\s+/g, "");
+            return this.optional(element) || phone_number.length > 9 &&
+                phone_number.match(/^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\-]?)?[\d\-]{7,10}$/);
+        }, "Введите корректный номер");
+
+        $().ready(function () {
+            $("#form").validate({
+                rules: {
+                    Name: "required",
+                    Phone: {
+                        phoneKZ: true,
+                        required: true
+                    }
+                },
+                messages: {
+                    Name: "Наименование аккаунта не должно быть пустым",
+                    Phone: "Введите корректный номер"
+                },
+                submitHandler: function (form) {
+                    var fileData = new FormData();
+                    fileData.append("file", files[0]);
+
+                    var wpLink = {
+                        Name: $("#instaName").val(),
+                        Phone: $("#phoneNumber").val(),
+                        Picture: document.getElementById("filePicture").files[0].name,
+                        Text: $("#textMsg").val(),
+                        Theme: $("#theme").val()
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: "home/save",
+                        contenttype: false,
+                        processdata: false,
+                        data: wpLink,
+                        success: function (result) {
+                            console.log(document.getElementById('filePicture').files[0]);
+                            console.log(document.getElementById('filePicture').files[0].name);
+                            $("#linkWhatsapp").attr("href", "http://whatspp.kz/" + $("#instaName").val());
+                            $("#displayAlert").attr("style", "");
+                        },
+                        error: function (result) {
+                            alert(result);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
+    <style>
+        label.error{
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="py-5 text-center">
+            <img class="d-block mx-auto mb-4" src="~/images/whatsapp.svg" alt="" width="72" height="72">
+            <h2>Создание ссылок</h2>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <form id="form" method="get" class="needs-validation">
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <label for="theme">Выберите стиль</label>
+                            <select class="custom-select d-block w-100" name="theme" id="theme">
+                                <option value="0">С картинкой</option>
+                                <option value="1">Только текст</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Выберите стиль
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="instaName">Наименование аккаунта</label>
+                            <input type="text" class="form-control" name="Name" id="instaName" placeholder="" />
+                            <div class="invalid-feedback">
+                                Наименование аккаунта не должно быть пустым
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phoneNumber">Номер телефона</label>
+                            <input type="tel" class="form-control" name="Phone" id="phoneNumber" placeholder="77071234567" />
+                            <div class="invalid-feedback">
+                                Номер телефона не должен быть пустым
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="filePicture">Выберите картинку</label>
+                        <div class="input-group">
+                            <input id="filePicture" name="Picture" type="file" class="file-input" accept="image/*"/>
+                            <div class="invalid-feedback">
+                                Your username is required.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="textMsg">Текст</label>
+                        <input type="text" name="Text" class="form-control" id="textMsg" placeholder="Здравствуйте">
+                    </div>
+
+                    <br />
+                    <div id="displayAlert" class="alert alert-success" role="alert" style="display:none">
+                        Ваша  <a id="linkWhatsapp" href="" target="_blank" class="alert-link">ссылка</a>
+                    </div>
+                    <hr class="mb-4">
+                    <input class="btn btn-primary btn-lg btn-block" name="submit" type="submit" id="submit" value="Сохранить" />
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        $(function () {
+            $("#theme").change(function () {
+                switch ($(this).val()) {
+                    case "0":
+                        $("#picture").attr("style", "");
+                        break;
+                    case "1":
+                        $("#picture").attr("style", "display: none");
+                        break;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
