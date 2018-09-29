@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.IO;
+using System.Net;
 using System.Text;
 using FluentFTP;
 using Microsoft.AspNetCore.Hosting;
@@ -39,6 +40,14 @@ namespace NurbolFtp.Controllers
                     .Replace(")", string.Empty)
                     .Replace("-", string.Empty);
 
+                model.Name = model.Name.Replace(" ", string.Empty);
+                char[] symbols = { '`', '#', '%', '&', '*', '{', '}', '\\', ':', '<', '>', '?', '/', '+', '|' };
+
+                if (model.Name.IndexOfAny(symbols) != -1)
+                {
+                    ModelState.AddModelError(string.Empty, $"В Наименование не должно быть символов {new string(symbols)}");
+                    return View(model);
+                }
                 string password = _configuration["Ftp:Pass"];
                 if (model.Password != password)
                 {
