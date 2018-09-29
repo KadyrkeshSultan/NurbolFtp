@@ -33,6 +33,11 @@ namespace NurbolFtp.Controllers
             {
                 if (!ModelState.IsValid)
                     return View(model);
+                model.Phone = model.Phone
+                    .Replace(" ", string.Empty)
+                    .Replace("(", string.Empty)
+                    .Replace(")", string.Empty)
+                    .Replace("-", string.Empty);
 
                 string password = _configuration["Ftp:Pass"];
                 if (model.Password != password)
